@@ -231,6 +231,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             val translatedMessage = translateText(serverMessage.message, "ko")
                             withContext(Dispatchers.Main) {
                                 messages.add(Message(translatedMessage, false))
+                                speakOut(translatedMessage)
                                 chatAdapter.notifyItemInserted(messages.size - 1)
                                 binding.recyclerView.scrollToPosition(messages.size - 1)
                             }
@@ -278,6 +279,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                             val translatedMessage = translateText(serverMessage.message, "ko")
                             withContext(Dispatchers.Main) {
                                 messages.add(Message(translatedMessage, false))
+                                speakOut(translatedMessage)
                                 chatAdapter.notifyItemInserted(messages.size - 1)
                                 binding.recyclerView.scrollToPosition(messages.size - 1)
                             }

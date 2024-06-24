@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00ff0000</color>
+    <color name="mono_gray1">#F2F2F2</color>
+    <color name="point">#3160D8</color>
+</resources>

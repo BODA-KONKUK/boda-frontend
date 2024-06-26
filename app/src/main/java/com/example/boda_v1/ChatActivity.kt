@@ -1,5 +1,6 @@
 package com.example.boda_v1
 
+import ChatAdapter
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.exifinterface.media.ExifInterface
 import androidx.loader.content.CursorLoader
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.boda_v1.Adapter.ChatAdapter
 import com.example.boda_v1.Retrofit.ClientMessage
 import com.example.boda_v1.Retrofit.IRetrofit
 import com.example.boda_v1.Retrofit.Message
@@ -218,7 +218,7 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
     }
 
-    private fun sendTextToServer(text: String, imageUrl: String?) {
+    private fun sendTextToServer(text: String, imageUrl: String?, retryCount: Int = 1) {
         val textData = TextData(text)
         val call = retrofitService.sendText(ClientMessage(text, imageUrl))
 
@@ -236,6 +236,8 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                                 binding.recyclerView.scrollToPosition(messages.size - 1)
                             }
                         }
+                    } else if (retryCount > 0) {
+                        clickUpload(retryCount - 1)
                     } else {
                         Toast.makeText(this@ChatActivity, "서버 응답이 없습니다.", Toast.LENGTH_SHORT).show()
                     }
@@ -245,19 +247,23 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             }
 
             override fun onFailure(call: Call<ServerMessage>, t: Throwable) {
-                if (t is HttpException) {
-                    val responseBody = t.response()?.errorBody()
-                    responseBody?.let {
-                        Log.e("서버에러", it.string())
+                if (retryCount > 0) {
+                    sendTextToServer(text, imageUrl, retryCount - 1)
+                } else {
+                    if (t is HttpException) {
+                        val responseBody = t.response()?.errorBody()
+                        responseBody?.let {
+                            Log.e("서버에러", it.string())
+                        }
                     }
+                    Log.d("get message", "${t.message}")
+                    Toast.makeText(this@ChatActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
                 }
-                Log.d("get message", "${t.message}")
-                Toast.makeText(this@ChatActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
     }
 
-    private fun clickUpload() {
+    private fun clickUpload(retryCount: Int = 1) {
         if (imgPath == null) {
             Toast.makeText(this, "이미지를 먼저 선택하세요.", Toast.LENGTH_SHORT).show()
             return
@@ -287,14 +293,20 @@ class ChatActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     } else {
                         Toast.makeText(this@ChatActivity, "서버 응답이 없습니다.", Toast.LENGTH_SHORT).show()
                     }
+                } else if (retryCount > 0) {
+                    clickUpload(retryCount - 1)
                 } else {
                     Toast.makeText(this@ChatActivity, "서버 요청 실패", Toast.LENGTH_SHORT).show()
                 }
             }
 
             override fun onFailure(call: Call<ServerMessage>, t: Throwable) {
-                Log.e("Upload failed", t.toString())
-                Toast.makeText(this@ChatActivity, "업로드 실패: $t", Toast.LENGTH_SHORT).show()
+                if (retryCount > 0) {
+                    clickUpload(retryCount - 1)
+                } else {
+                    Log.e("Upload failed", t.toString())
+                    Toast.makeText(this@ChatActivity, "업로드 실패: $t", Toast.LENGTH_SHORT).show()
+                }
             }
         })
     }
